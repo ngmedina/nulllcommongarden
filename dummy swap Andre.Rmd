@@ -1,0 +1,60 @@
+---
+  
+  ### **R Markdown File - Null Model Randomization within Localities**
+  ```r
+---
+  title: "Null Model Randomization by Locality"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: html_document
+---
+  
+  ```{r setup, include=FALSE}
+# Load required libraries
+library(vegan)
+library(dplyr)
+```
+
+## **Introduction**
+In this tutorial, we apply the **quasiswap null model** separately within each locality to maintain row and column sums while randomizing data.
+
+## **Step 1: Generate Example Data**
+```{r}
+set.seed(123)
+localities <- rep(c("A", "B", "C"), each = 10)  # Locality labels
+data <- data.frame(Locality = localities, matrix(sample(1:100, 50, replace = TRUE), nrow = 30, ncol = 5))
+
+# Print first few rows
+head(data)
+```
+
+## **Step 2: Apply Quasiswap Randomization Per Locality**
+```{r}
+randomize_by_locality <- function(df) {
+  df %>%
+    group_by(Locality) %>%
+    group_modify(~ data.frame(Locality = .x$Locality, nullmodel(as.matrix(.x[, -1]), method = "quasiswap"))) %>%
+    ungroup()
+}
+
+null_data <- randomize_by_locality(data)
+head(null_data)
+```
+
+## **Step 3: Compare Observed and Null Model Data**
+```{r}
+observed_mean <- mean(as.matrix(data[, -1]))
+null_mean <- mean(as.matrix(null_data[, -1]))
+
+cat("Observed Mean:", observed_mean, "\n")
+cat("Null Model Mean:", null_mean, "\n")
+```
+
+## **Step 4: Visualize the Data**
+```{r}
+par(mfrow = c(1,2))
+image(as.matrix(data[data$Locality == "A", -1]), main = "Observed Data (Locality A)", col = heat.colors(20))
+image(as.matrix(null_data[null_data$Locality == "A", -1]), main = "Null Model Data (Locality A)", col = heat.colors(20))
+```
+
+
